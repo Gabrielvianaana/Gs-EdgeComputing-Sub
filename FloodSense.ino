@@ -8,7 +8,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 RTC_DS3231 rtc;
 
 // Pinos
-const int potenciometro = A0; // Agora é um slide pot
+const int potenciometro = A0; // Slide pot
 const int buzzer = 9;
 const int ledVerde = 6;
 const int ledAmarelo = 7;
@@ -16,6 +16,7 @@ const int ledVermelho = 8;
 
 // Variáveis
 int menorUmidade = 100;
+int maiorUmidade = 0;
 float umidadeSuavizada = -1;
 const float alpha = 0.1;
 int umidadeAnterior = -1;
@@ -47,9 +48,10 @@ void setup() {
   delay(3000);
 
   menorUmidade = EEPROM.read(0);
-  if (menorUmidade < 0 || menorUmidade > 100) {
-    menorUmidade = 100;
-  }
+  maiorUmidade = EEPROM.read(1);
+
+  if (menorUmidade < 0 || menorUmidade > 100) menorUmidade = 100;
+  if (maiorUmidade < 0 || maiorUmidade > 100) maiorUmidade = 0;
 }
 
 void loop() {
@@ -59,9 +61,7 @@ void loop() {
     delay(2);
   }
   int leitura = soma / 50;
-
-  // Slide pot vai de 0 a 1023: 0 (seco), 1023 (encharcado)
-  int umidade = map(leitura, 1023, 0, 0, 100);  // 100% = solo seco
+  int umidade = map(leitura, 1023, 0, 0, 100);
   umidade = constrain(umidade, 0, 100);
 
   if (umidadeSuavizada < 0) {
@@ -73,9 +73,14 @@ void loop() {
   int umidadeFiltrada = round(umidadeSuavizada);
   DateTime agora = rtc.now();
 
+  // Atualiza menor e maior umidade
   if (umidadeFiltrada < menorUmidade) {
     menorUmidade = umidadeFiltrada;
     EEPROM.write(0, menorUmidade);
+  }
+  if (umidadeFiltrada > maiorUmidade) {
+    maiorUmidade = umidadeFiltrada;
+    EEPROM.write(1, maiorUmidade);
   }
 
   if (abs(umidadeFiltrada - umidadeAnterior) >= tolerancia || umidadeAnterior == -1) {
@@ -98,10 +103,13 @@ void loop() {
     if (agora.second() < 10) lcd.print("0");
     lcd.print(agora.second());
 
+    // Serial Monitor
     Serial.print("Umidade: ");
     Serial.print(umidadeFiltrada);
     Serial.print("% | Menor: ");
     Serial.print(menorUmidade);
+    Serial.print("% | Maior: ");
+    Serial.print(maiorUmidade);
     Serial.print("% | Hora: ");
     Serial.print(agora.hour());
     Serial.print(":");
@@ -109,6 +117,7 @@ void loop() {
     Serial.print(":");
     Serial.println(agora.second());
 
+    // Alerta visual e sonoro
     digitalWrite(ledVerde, LOW);
     digitalWrite(ledAmarelo, LOW);
     digitalWrite(ledVermelho, LOW);
