@@ -8,7 +8,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 RTC_DS3231 rtc;
 
 // Pinos
-const int sensorSolo = A0;
+const int potenciometro = A0; // Agora é um slide pot
 const int buzzer = 9;
 const int ledVerde = 6;
 const int ledAmarelo = 7;
@@ -17,16 +17,16 @@ const int ledVermelho = 8;
 // Variáveis
 int menorUmidade = 100;
 float umidadeSuavizada = -1;
-const float alpha = 0.1;  // Suavização exponencial
-int umidadeAnterior = -1; // Para histerese
-const int tolerancia = 3; // Histerese para estabilidade
+const float alpha = 0.1;
+int umidadeAnterior = -1;
+const int tolerancia = 3;
 
 void setup() {
   Serial.begin(9600);
   lcd.init();
   lcd.backlight();
 
-  pinMode(sensorSolo, INPUT);
+  pinMode(potenciometro, INPUT);
   pinMode(buzzer, OUTPUT);
   pinMode(ledVerde, OUTPUT);
   pinMode(ledAmarelo, OUTPUT);
@@ -53,19 +53,17 @@ void setup() {
 }
 
 void loop() {
-  // Leitura com média de 50 amostras
   long soma = 0;
   for (int i = 0; i < 50; i++) {
-    soma += analogRead(sensorSolo);
+    soma += analogRead(potenciometro);
     delay(2);
   }
   int leitura = soma / 50;
 
-  // Ajuste do mapeamento do sensor (ajustável conforme necessidade real)
-  int umidade = map(leitura, 800, 500, 0, 100);
+  // Slide pot vai de 0 a 1023: 0 (seco), 1023 (encharcado)
+  int umidade = map(leitura, 1023, 0, 0, 100);  // 100% = solo seco
   umidade = constrain(umidade, 0, 100);
 
-  // Suavização exponencial
   if (umidadeSuavizada < 0) {
     umidadeSuavizada = umidade;
   } else {
@@ -75,17 +73,14 @@ void loop() {
   int umidadeFiltrada = round(umidadeSuavizada);
   DateTime agora = rtc.now();
 
-  // Atualiza EEPROM
   if (umidadeFiltrada < menorUmidade) {
     menorUmidade = umidadeFiltrada;
     EEPROM.write(0, menorUmidade);
   }
 
-  // Só atualiza display e LEDs se houver variação significativa
   if (abs(umidadeFiltrada - umidadeAnterior) >= tolerancia || umidadeAnterior == -1) {
     umidadeAnterior = umidadeFiltrada;
 
-    // LCD
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Solo: ");
@@ -103,7 +98,6 @@ void loop() {
     if (agora.second() < 10) lcd.print("0");
     lcd.print(agora.second());
 
-    // Serial
     Serial.print("Umidade: ");
     Serial.print(umidadeFiltrada);
     Serial.print("% | Menor: ");
@@ -115,21 +109,23 @@ void loop() {
     Serial.print(":");
     Serial.println(agora.second());
 
-    // Reset LEDs e buzzer
     digitalWrite(ledVerde, LOW);
     digitalWrite(ledAmarelo, LOW);
     digitalWrite(ledVermelho, LOW);
     noTone(buzzer);
 
-    // Alerta por faixa ideal (ideal: 40–69%)
     if (umidadeFiltrada >= 70) {
-      digitalWrite(ledVerde, HIGH);  // Encharcado
-      tone(buzzer, 1000);            // ALERTA
+      digitalWrite(ledVerde, HIGH);
+      tone(buzzer, 1000);
+      delay(3000);
+      noTone(buzzer);
     } else if (umidadeFiltrada >= 40) {
-      digitalWrite(ledAmarelo, HIGH); // Ideal
+      digitalWrite(ledAmarelo, HIGH);
     } else {
-      digitalWrite(ledVermelho, HIGH); // Seco
-      tone(buzzer, 1000);              // ALERTA
+      digitalWrite(ledVermelho, HIGH);
+      tone(buzzer, 1000);
+      delay(3000);
+      noTone(buzzer);
     }
   }
 
