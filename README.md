@@ -1,5 +1,3 @@
-# Gs-EdgeComputing-Sub
-
 🌱 Projeto FloodSense - Medidor Inteligente de Umidade do Solo
 
 📌 Descrição
@@ -10,51 +8,52 @@ Protótipo funcional baseado em Arduino Uno R3 para monitorar os níveis de umid
 
 Arduino Uno R3
 
-Sensor de umidade do solo (capacitivo ou analógico)
+Sensor de umidade do solo (simulado por slide potenciômetro)
 
 Display LCD 16x2 com I2C
 
 Módulo RTC (DS3231)
 
-Buzzer
+Buzzer (alerta sonoro)
 
-LEDs (verde, amarelo, vermelho)
+LEDs (verde, amarelo, vermelho) com resistores 220Ω
 
-Resistores 220Ω
-
-EEPROM interna
+EEPROM interna do Arduino
 
 Protoboard e jumpers
 
 ⚙️ Funcionamento
 
-Leitura da umidade do solo com filtro exponencial
+Leitura da umidade do solo (simulada por potenciômetro)
 
-Três níveis de alerta:
+Filtro exponencial para suavização de leitura
 
-Alta umidade (≥ 70%): LED verde + buzzer
+Três níveis de alerta visual:
 
-Moderada (40% a 69%): LED amarelo
+Umidade alta (≥ 70%): LED verde + buzzer por 3 segundos
 
-Baixa (< 40%): LED vermelho + buzzer
+Umidade ideal (40–69%): LED amarelo
 
-Display LCD exibe umidade atual e horário (RTC)
+Umidade baixa (< 40%): LED vermelho + buzzer por 3 segundos
 
-EEPROM registra a menor umidade detectada
+Display LCD exibe a umidade atual e o horário via módulo RTC
 
-Histerese evita oscilações abruptas
+EEPROM armazena a menor umidade detectada
+
+Histerese evita oscilações visuais e falsas leituras
 
 🚨 Diferenciais
 
 Alerta para excesso e escassez de umidade
 
+Simulação de sensor com potenciômetro facilita testes
+
 Registro histórico com EEPROM
 
 Leitura suavizada e estável
 
-Interface de fácil compreensão e operação
+Interface visual e sonora amigável
 
-Código limpo, comentado e modularizado
 
 
 🔧 Como Utilizar
