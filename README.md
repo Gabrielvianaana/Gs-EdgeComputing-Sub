@@ -55,6 +55,12 @@ Leitura suavizada e estável
 Interface visual e sonora amigável
 
 
+🎥 Demonstração: 
+
+link wokwi: https://wokwi.com/projects/434931387195424769
+
+link youtube: https://youtu.be/N5b3uO3jhJw
+
 
 🔧 Como Utilizar
 
